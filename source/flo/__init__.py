@@ -78,3 +78,15 @@ class HIRS_CTP_ORBITAL(Computation):
         check_call(cmd, shell=True, env=augmented_env({'LD_LIBRARY_PATH': lib_dir}))
 
         return {'out': output}
+
+    def find_contexts(self, sat, hirs_version, collo_version, csrb_version, ctp_version,
+                      time_interval):
+
+        files = delta_catalog.files('hirs', sat, 'HIR1B', time_interval)
+        return [{'granule': file.data_interval.left,
+                 'sat': sat,
+                 'hirs_version': hirs_version,
+                 'collo_version': collo_version,
+                 'csrb_version': csrb_version,
+                 'ctp_version': ctp_version}
+                for file in files]
