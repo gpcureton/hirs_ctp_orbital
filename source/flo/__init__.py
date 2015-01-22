@@ -90,3 +90,9 @@ class HIRS_CTP_ORBITAL(Computation):
                  'csrb_version': csrb_version,
                  'ctp_version': ctp_version}
                 for file in files]
+
+    def context_path(self, context, output):
+
+        return os.path.join('HIRS',
+                            '{}/{}'.format(context['sat'], context['granule'].year),
+                            'CTP_ORBITAL')
