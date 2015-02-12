@@ -89,7 +89,8 @@ class HIRS_CTP_ORBITAL(Computation):
                  'collo_version': collo_version,
                  'csrb_version': csrb_version,
                  'ctp_version': ctp_version}
-                for file in files]
+                for file in files
+                if file.data_interval.left >= time_interval.let]
 
     def context_path(self, context, output):
 
