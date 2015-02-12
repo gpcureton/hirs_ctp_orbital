@@ -1,5 +1,6 @@
 from datetime import datetime
 from flo.time import TimeInterval
+from flo.sw.hirs_csrb_monthly import HIRS_CSRB_MONTHLY
 from flo.sw.hirs_ctp_orbital import HIRS_CTP_ORBITAL
 from flo.ui import submit_order
 import logging
@@ -20,10 +21,10 @@ def submit(logger, interval, platform):
 
     while 1:
         try:
-            return submit_order(c, [c.dataset('out')], contexts)
+            return submit_order(c, [c.dataset('out')], contexts, (HIRS_CSRB_MONTHLY(),))
         except:
-            time.sleep(5*60)
             logger.info('Failed submiting jobs.  Sleeping for 5 minutes and submitting again')
+            time.sleep(5*60)
 
 # Setup Logging
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='[%(asctime)s] %(message)s')
