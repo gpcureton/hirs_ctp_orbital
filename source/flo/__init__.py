@@ -13,6 +13,10 @@ from flo.sw.hirs_avhrr import HIRS_AVHRR
 from flo.sw.hirs_csrb_monthly import HIRS_CSRB_MONTHLY
 from flo.sw.hirs.delta import delta_catalog
 
+# every module should have a LOG object
+import logging, traceback
+LOG = logging.getLogger(__file__)
+
 
 class HIRS_CTP_ORBITAL(Computation):
 
