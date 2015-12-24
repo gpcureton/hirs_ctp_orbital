@@ -94,6 +94,7 @@ class HIRS_CTP_ORBITAL(Computation):
 
         # Output Name
         output = 'ctp.orbital.{}.{}.nc'.format(context['sat'], inputs['HIR1B'][12:30])
+        LOG.debug("output :  {}".format(output)) # GPC
 
         # Copy coeffs to working directory
         [shutil.copy(f, './')
@@ -101,7 +102,8 @@ class HIRS_CTP_ORBITAL(Computation):
          in glob(os.path.join(self.package_root, context['ctp_version'], 'coeffs/*'))]
 
         # Generating CFSR Binaries
-        generate_cfsr_bin(os.path.join(self.package_root, context['ctp_version']))
+        cfsr_bin_files = generate_cfsr_bin(os.path.join(self.package_root, context['ctp_version']))
+        LOG.debug("cfsr_bin_files :  {}".format(cfsr_bin_files)) # GPC
 
         # Running CTP Orbital
         cmd = os.path.join(self.package_root, context['ctp_version'],
@@ -112,7 +114,7 @@ class HIRS_CTP_ORBITAL(Computation):
                                          'CFSR_lst.bin'))
         cmd += ' {} {} {}'.format(debug, shifted_FM_opt, output)
 
-        print cmd
+        LOG.debug(cmd)
         check_call(cmd, shell=True, env=augmented_env({'LD_LIBRARY_PATH': lib_dir}))
 
         return {'out': output}
@@ -131,8 +133,8 @@ class HIRS_CTP_ORBITAL(Computation):
                 if num_cfsr_files != 0:
                     LOG.debug("\tpgbhnl.gdas.*.grb2 CFSR files from PEATE : {}".format(cfsr_file)) # GPC
             except Exception, err :
-                LOG.error("{}.".format(err))
-                LOG.warn("\tRetrieval of pgbhnl.gdas.*.grb2 CFSR file from PEATE failed") # GPC
+                #LOG.error("{}.".format(err))
+                LOG.debug("\tRetrieval of pgbhnl.gdas.*.grb2 CFSR file from PEATE failed") # GPC
 
         # Search for the new style cdas1.*.t*z.pgrbhanl.grib2 file from PEATE
         #num_cfsr_files = 0
@@ -144,8 +146,8 @@ class HIRS_CTP_ORBITAL(Computation):
                 if num_cfsr_files != 0:
                     LOG.debug("\tcdas1.*.t*z.pgrbhanl.grib2 CFSR file from PEATE : {}".format(cfsr_file)) # GPC
             except Exception, err :
-                LOG.error("{}.".format(err))
-                LOG.warn("\tRetrieval of cdas1.*.t*z.pgrbhanl.grib2 CFSR file from PEATE failed") # GPC
+                #LOG.error("{}.".format(err))
+                LOG.debug("\tRetrieval of cdas1.*.t*z.pgrbhanl.grib2 CFSR file from PEATE failed") # GPC
 
         # Search for the old style pgbhnl.gdas.*.grb2 file from the file list
         #num_cfsr_files = 0
