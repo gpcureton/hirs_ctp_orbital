@@ -12,7 +12,7 @@ from flo.product import StoredProductCatalog
 from flo.ingest import IngestCatalog
 
 from flo.sw.hirs import HIRS
-from flo.sw.hirs.util import generate_cfsr_bin
+#from flo.sw.hirs.util import generate_cfsr_bin
 from flo.sw.hirs_avhrr import HIRS_AVHRR
 from flo.sw.hirs_csrb_monthly import HIRS_CSRB_MONTHLY
 from flo.sw.hirs.delta import delta_catalog
@@ -102,7 +102,7 @@ class HIRS_CTP_ORBITAL(Computation):
          in glob(os.path.join(self.package_root, context['ctp_version'], 'coeffs/*'))]
 
         # Generating CFSR Binaries
-        cfsr_bin_files = generate_cfsr_bin(os.path.join(self.package_root, context['ctp_version']))
+        cfsr_bin_files = self.generate_cfsr_bin(os.path.join(self.package_root, context['ctp_version']))
         LOG.debug("cfsr_bin_files :  {}".format(cfsr_bin_files)) # GPC
 
         # Running CTP Orbital
@@ -166,6 +166,39 @@ class HIRS_CTP_ORBITAL(Computation):
         #LOG.info("We've found {} CFSR file for context {}".format(len(cfsr_file),cfsr_granule)) # GPC
 
         return cfsr_file
+
+
+    def generate_cfsr_bin(self,package_root):
+
+        shutil.copy(os.path.join(package_root, 'bin/wgrib2'), './')
+
+        # Search for the old style pgbhnl.gdas.*.grb2 files
+        LOG.debug("Searching for pgbhnl.gdas.*.grb2 ...")
+        files = glob('pgbhnl.gdas.*.grb2')
+        LOG.debug("... found {}".format(files))
+
+        # Search for the new style cdas1.*.t*z.pgrbhanl.grib2
+        if len(files)==0:
+            LOG.debug("Searching for cdas1.*.pgrbhanl.grib2 ...")
+            files = glob('cdas1.*.pgrbhanl.grib2')
+            LOG.debug("... found {}".format(files))
+
+        LOG.debug("CFSR files: {}".format(files)) # GPC
+
+        new_cfsr_files = []
+        for file in files:
+            cmd = os.path.join(package_root, 'bin/extract_cfsr.csh')
+            cmd += ' {} {}.bin ./'.format(file, file)
+
+            LOG.debug(cmd)
+
+            try:
+                check_call(cmd, shell=True)
+                new_cfsr_files.append('{}.bin'.format(file))
+            except:
+                pass
+
+        return new_cfsr_files
 
 
     def find_contexts(self, sat, hirs_version, collo_version, csrb_version, ctp_version,
