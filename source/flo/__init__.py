@@ -39,8 +39,12 @@ class HIRS_CTP_ORBITAL(Computation):
         hirs_context = context.copy()
         [hirs_context.pop(k) for k in ['collo_version', 'csrb_version', 'ctp_version']]
         LOG.debug("hirs_context:  {}".format(hirs_context)) # GPC
-        task.input('HIR1B', HIRS().dataset('out').product(hirs_context))
-
+        if SPC.exists(HIRS().dataset('out').product(hirs_context)):
+            task.input('HIR1B', HIRS().dataset('out').product(hirs_context))
+        else:
+            LOG.warn("HIRS granule {} is not in the StoredProductCatalog.".
+                    format(hirs_context['granule']))
+            return
 
         # Collo Input
         collo_context = hirs_context
@@ -70,12 +74,23 @@ class HIRS_CTP_ORBITAL(Computation):
         for task_key in task.inputs.keys():
             LOG.debug("\t{}: {}".format(task_key,task.inputs[task_key])) # GPC
 
-        for task_key in ['HIR1B','COLLO','CSRB']:
-            if task_key in task.inputs.keys():
-                LOG.debug("{} file: {}".format(task_key,SPC.file(task.inputs[task_key]).path))
-        for task_key in ['CFSR']:
-            if task_key in task.inputs.keys():
-                LOG.debug("{} file: {}".format(task_key,task.inputs[task_key].path))
+        #for task_key in ['HIR1B','COLLO','CSRB']:
+            #if task_key in task.inputs.keys():
+                #try:
+                    #LOG.debug("{} file: {}".format(task_key,SPC.file(task.inputs[task_key]).path))
+                #except Exception, err :
+                    #LOG.warn("'SPC.file(task.inputs[{}]).path' failed.".format(task_key)) # GPC
+                    #LOG.error("{}.".format(err))
+                    #LOG.debug(traceback.format_exc())
+
+        #for task_key in ['CFSR']:
+            #if task_key in task.inputs.keys():
+                #try:
+                    #LOG.debug("{} file: {}".format(task_key,task.inputs[task_key].path))
+                #except Exception, err :
+                    #LOG.warn("'SPC.file(task.inputs[{}]).path' failed.".format(task_key)) # GPC
+                    #LOG.error("{}.".format(err))
+                    #LOG.debug(traceback.format_exc())
 
         LOG.debug("Exiting build_task()...") # GPC
 
