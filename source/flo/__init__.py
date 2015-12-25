@@ -44,6 +44,7 @@ class HIRS_CTP_ORBITAL(Computation):
         else:
             LOG.warn("HIRS granule {} is not in the StoredProductCatalog.".
                     format(hirs_context['granule']))
+            task.inputs = {}
             return
 
         # Collo Input
@@ -73,24 +74,6 @@ class HIRS_CTP_ORBITAL(Computation):
         LOG.debug("Final task.inputs...") # GPC
         for task_key in task.inputs.keys():
             LOG.debug("\t{}: {}".format(task_key,task.inputs[task_key])) # GPC
-
-        #for task_key in ['HIR1B','COLLO','CSRB']:
-            #if task_key in task.inputs.keys():
-                #try:
-                    #LOG.debug("{} file: {}".format(task_key,SPC.file(task.inputs[task_key]).path))
-                #except Exception, err :
-                    #LOG.warn("'SPC.file(task.inputs[{}]).path' failed.".format(task_key)) # GPC
-                    #LOG.error("{}.".format(err))
-                    #LOG.debug(traceback.format_exc())
-
-        #for task_key in ['CFSR']:
-            #if task_key in task.inputs.keys():
-                #try:
-                    #LOG.debug("{} file: {}".format(task_key,task.inputs[task_key].path))
-                #except Exception, err :
-                    #LOG.warn("'SPC.file(task.inputs[{}]).path' failed.".format(task_key)) # GPC
-                    #LOG.error("{}.".format(err))
-                    #LOG.debug(traceback.format_exc())
 
         LOG.debug("Exiting build_task()...") # GPC
 
