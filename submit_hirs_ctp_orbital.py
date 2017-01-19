@@ -7,15 +7,13 @@ from datetime import datetime, timedelta
 from calendar import monthrange
 import logging
 import traceback
-import getpass
-
-from subprocess import CalledProcessError, call
-from subprocess import Popen, STDOUT, PIPE
 
 from flo.time import TimeInterval
 from flo.ui import safe_submit_order
 from flo.product import StoredProductCatalog
 
+from flo.sw.hirs import HIRS
+from flo.sw.hirs_avhrr import HIRS_AVHRR
 from flo.sw.hirs_csrb_monthly import HIRS_CSRB_MONTHLY
 from flo.sw.hirs_ctp_orbital import HIRS_CTP_ORBITAL
 
@@ -65,7 +63,7 @@ wedge = timedelta(seconds=1.)
 
 # Examine how many of the defined contexts are populated
 intervals = []
-year,month = 2016,4
+year,month = 2016,5
 days = range(1,monthrange(year, month)[1]+1)
 for day in days:
     dt_start = datetime(year, month, day)
@@ -81,7 +79,6 @@ for day in days:
     if missing_contexts > 3:
         intervals.append(interval)
 
-
 LOG.info("Submitting intervals...")
 for interval in intervals:
     LOG.info("Submitting interval {} -> {}".format(interval.left, interval.right))
@@ -89,11 +86,11 @@ for interval in intervals:
                                   interval)
     LOG.info("\tThere are {} contexts in this interval".format(len(contexts)))
     contexts.sort()
-    #for context in contexts:
-        #LOG.debug(context)
+    for context in contexts:
+        LOG.debug(context)
     LOG.info("\tFirst context: {}".format(contexts[0]))
     LOG.info("\tLast context:  {}".format(contexts[-1]))
     LOG.info("\t{}".format(safe_submit_order(comp,
                                              [comp.dataset('out')],
                                              contexts,
-                                             download_onlies=[HIRS_CSRB_MONTHLY()])))
+                                             download_onlies=[HIRS(), HIRS_AVHRR(), HIRS_CSRB_MONTHLY()])))
