@@ -1,81 +1,109 @@
-import os
-from datetime import datetime, timedelta
-import logging
-import traceback
+#!/usr/bin/env python
+# encoding: utf-8
+"""
 
-from flo.time import TimeInterval
+Purpose: Run the hirs_ctp_orbital package
+
+Copyright (c) 2015 University of Wisconsin Regents.
+Licensed under GNU GPLv3.
+"""
+
+import sys
+import traceback
+import logging
+
+from timeutil import TimeInterval, datetime, timedelta
 from flo.ui import local_prepare, local_execute
 
-from flo.sw.hirs import HIRS
-from flo.sw.hirs_avhrr import HIRS_AVHRR
-from flo.sw.hirs_csrb_monthly import HIRS_CSRB_MONTHLY
-from flo.sw.hirs_ctp_orbital import HIRS_CTP_ORBITAL
+import flo.sw.hirs as hirs
+import flo.sw.hirs_avhrr as hirs_avhrr
+import flo.sw.hirs_csrb_monthly as hirs_csrb_monthly
+import flo.sw.hirs_ctp_orbital as hirs_ctp_orbital
+from flo.sw.hirs.utils import setup_logging
 
 # every module should have a LOG object
 LOG = logging.getLogger(__name__)
 
-# Set up the logging
-levels = [logging.ERROR, logging.WARN, logging.INFO, logging.DEBUG]
-level = levels[3]
-if level == logging.DEBUG:
-    console_logFormat = '%(asctime)s.%(msecs)03d (%(levelname)s) : %(filename)s : %(funcName)s : %(lineno)d:%(message)s'
-    dateFormat = '%Y-%m-%d %H:%M:%S'
-else:
-    console_logFormat = '%(asctime)s.%(msecs)03d (%(levelname)s) : %(message)s'
-    dateFormat = '%Y-%m-%d %H:%M:%S'
-
-logging.basicConfig(level=level,
-                    format=console_logFormat,
-                    datefmt=dateFormat)
-
 # General information
-comp = HIRS_CTP_ORBITAL()
+hirs_version  = 'v20151014'
+collo_version = 'v20151014'
+csrb_version  = 'v20150915'
+ctp_version = 'v20150915'
+wedge = timedelta(seconds=1.)
+
+# Satellite specific information
+
+#granule = datetime(2017, 1, 1, 0, 32)
+#interval = TimeInterval(granule, granule+timedelta(seconds=0))
+
+# Data locations
+collection = {'HIR1B': 'ILIAD',
+              'CFSR': 'DELTA',
+              'PTMSX': 'ILIAD'}
+# NOAA-19
+#satellite = 'noaa-19'
+#input_data = {'HIR1B': '/mnt/sdata/geoffc/HIRS_processing/data_lists/NOAA-19/HIR1B_noaa-19_latest',
+              #'CFSR':  '/mnt/sdata/geoffc/HIRS_processing/data_lists/CFSR.out',
+              #'PTMSX': '/mnt/sdata/geoffc/HIRS_processing/data_lists/NOAA-19/PTMSX_noaa-19_latest'}
+
+# Metop-B
+#satellite = 'metop-b'
+input_data = {'HIR1B': '/mnt/cephfs_data/geoffc/hirs_data_lists/Metop-B/HIR1B_metop-b_latest',
+              'CFSR':  '/mnt/cephfs_data/geoffc/hirs_data_lists/CFSR.out',
+              'PTMSX': '/mnt/cephfs_data/geoffc/hirs_data_lists/Metop-B/PTMSX_metop-b_latest'}
+
+input_sources = {'collection':collection, 'input_data':input_data}
+
+# Initialize the hirs_avhrr module with the data locations
+hirs_ctp_orbital.set_input_sources(input_sources)
+
+# Instantiate the computations
+hirs_comp = hirs.HIRS()
+hirs_avhrr_comp = hirs_avhrr.HIRS_AVHRR()
+hirs_csrb_monthly_comp = hirs_csrb_monthly.HIRS_CSRB_MONTHLY()
+comp = hirs_ctp_orbital.HIRS_CTP_ORBITAL()
 
 #
 # Local execution
 #
 
-def local_execute_example(granule, platform, hirs_version, collo_version, csrb_version, ctp_version,
-                          skip_prepare=False, skip_execute=False):
-    comp_dict = {
-        'granule': granule,
-        'sat': platform, 
-        'hirs_version': hirs_version, 
-        'collo_version': collo_version, 
-        'csrb_version': csrb_version,
-        'ctp_version': ctp_version}
+def local_execute_example(interval, satellite, hirs_version, collo_version, csrb_version, ctp_version,
+                          skip_prepare=False, skip_execute=False, verbosity=2):
 
-    try:
-        if not skip_prepare:
-            LOG.info("Running local prepare...")
-            local_prepare(comp, comp_dict, download_only=[HIRS(), HIRS_AVHRR(), HIRS_CSRB_MONTHLY()])
-        if not skip_execute:
-            LOG.info("Running local execute...")
-            local_execute(comp, comp_dict)
-    except Exception, err:
-        LOG.error("{}".format(err))
-        LOG.info(traceback.format_exc())
 
-def print_contexts(platform, dt_left, dt_right, granule_length):
-    interval = TimeInterval(dt_left, dt_right)
-    contexts = comp.find_contexts(platform, hirs_version, collo_version, csrb_version, ctp_version,
-                                  interval)
-    contexts.sort()
+    setup_logging(verbosity)
+
+    # Get the required context...
+    contexts = comp.find_contexts(interval, satellite, hirs_version, collo_version, csrb_version, ctp_version)
+
+    if len(contexts) != 0:
+        LOG.info("Candidate contexts in interval...")
+        for context in contexts:
+            print("\t{}".format(context))
+
+        try:
+            if not skip_prepare:
+                LOG.info("Running hirs_ctp_orbital local_prepare()...")
+                LOG.info("Preparing context... {}".format(contexts[0]))
+                local_prepare(comp, contexts[0],download_only=[hirs_comp, hirs_avhrr_comp, hirs_csrb_monthly_comp])
+            if not skip_execute:
+                LOG.info("Running hirs_ctp_orbital local_execute()...")
+                LOG.info("Running context... {}".format(contexts[0]))
+                local_execute(comp, contexts[0])
+        except Exception, err:
+            LOG.error("{}".format(err))
+            LOG.debug(traceback.format_exc())
+    else:
+        LOG.error("There are no valid {} contexts for the interval {}.".format(satellite, interval))
+
+def print_contexts(interval, satellite, hirs_version, collo_version, csrb_version, ctp_version, verbosity=2):
+    setup_logging(verbosity)
+    contexts = comp.find_contexts(interval, satellite, hirs_version, collo_version, csrb_version, ctp_version)
     for context in contexts:
-        print context
+        LOG.info(context)
 
-    return contexts
+#satellite_choices = ['noaa-06', 'noaa-07', 'noaa-08', 'noaa-09', 'noaa-10', 'noaa-11',
+                    #'noaa-12', 'noaa-14', 'noaa-15', 'noaa-16', 'noaa-17', 'noaa-18',
+                    #'noaa-19', 'metop-a', 'metop-b']
 
-platform_choices = ['noaa-06', 'noaa-07', 'noaa-08', 'noaa-09', 'noaa-10', 'noaa-11',
-                    'noaa-12', 'noaa-14', 'noaa-15', 'noaa-16', 'noaa-17', 'noaa-18',
-                    'noaa-19', 'metop-a', 'metop-b']
-
-platform = 'metop-b'
-hirs_version  = 'v20151014'
-collo_version = 'v20151014'
-csrb_version  = 'v20150915'
-ctp_version = 'v20150915'
-granule = datetime(2016, 6, 3, 21, 17)
-granule = datetime(2016, 6, 3, 20, 32)
-
-#local_execute_example(granule, platform, hirs_version, collo_version, csrb_version, ctp_version)
+#local_execute_example(granule, satellite, hirs_version, collo_version, csrb_version, ctp_version)
