@@ -147,7 +147,7 @@ class HIRS_CTP_ORBITAL(Computation):
         try:
             ptmsx_file = delta_catalog.file(sensor, satellite, file_type, granule)
             task.input('PTMSX',ptmsx_file)
-        except IngestFileMissing:
+        except WorkflowNotReady:
             raise WorkflowNotReady('No PTMSX inputs available for {}'.format(granule))
 
         # Collo Input
