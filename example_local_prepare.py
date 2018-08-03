@@ -105,14 +105,16 @@ def local_execute_example(interval, satellite, hirs2nc_delivery_id, hirs_avhrr_d
                         LOG.info("Running hirs_ctp_orbital local_execute()...")
                         LOG.info("Running context... {}".format(context))
                         local_execute(comp, context)
+
+                    if not skip_prepare:
+                        shutil.move('inputs', 'inputs_{}'.format(idx))
+                    if not skip_execute:
+                        shutil.move('outputs', 'outputs_{}'.format(idx))
+
                 except Exception, err:
                     LOG.error("{}".format(err))
                     LOG.debug(traceback.format_exc())
 
-                if not skip_prepare:
-                    shutil.move('inputs', 'inputs_{}'.format(idx))
-                if not skip_execute:
-                    shutil.move('outputs', 'outputs_{}'.format(idx))
         else:
 
             try:
