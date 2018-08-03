@@ -8,7 +8,10 @@ Copyright (c) 2015 University of Wisconsin Regents.
 Licensed under GNU GPLv3.
 """
 
+import os
 import sys
+from os.path import basename, dirname, curdir, abspath, isdir, isfile, exists, splitext, join as pjoin
+import shutil
 import traceback
 import logging
 
@@ -70,7 +73,7 @@ def setup_computation(satellite):
 def local_execute_example(interval, satellite, hirs2nc_delivery_id, hirs_avhrr_delivery_id,
                           hirs_csrb_daily_delivery_id, hirs_csrb_monthly_delivery_id,
                           hirs_ctp_orbital_delivery_id,
-                          skip_prepare=False, skip_execute=False, verbosity=2):
+                          skip_prepare=False, skip_execute=False, single=True, verbosity=2):
 
     setup_logging(verbosity)
 
@@ -89,18 +92,43 @@ def local_execute_example(interval, satellite, hirs2nc_delivery_id, hirs_avhrr_d
         for context in contexts:
             print("\t{}".format(context))
 
-        try:
-            if not skip_prepare:
-                LOG.info("Running hirs_ctp_orbital local_prepare()...")
-                LOG.info("Preparing context... {}".format(contexts[0]))
-                local_prepare(comp, contexts[0], download_only=[hirs2nc_comp, hirs_avhrr_comp, hirs_csrb_monthly_comp])
-            if not skip_execute:
-                LOG.info("Running hirs_ctp_orbital local_execute()...")
-                LOG.info("Running context... {}".format(contexts[0]))
-                local_execute(comp, contexts[0])
-        except Exception, err:
-            LOG.error("{}".format(err))
-            LOG.debug(traceback.format_exc())
+        if not single:
+
+            for idx,context in enumerate(contexts):
+                LOG.info('Current Dir: {} {}'.format(idx, os.getcwd()))
+                try:
+                    if not skip_prepare:
+                        LOG.info("Running hirs_ctp_orbital local_prepare()...")
+                        LOG.info("Preparing context... {}".format(context))
+                        local_prepare(comp, context, download_only=[hirs2nc_comp, hirs_avhrr_comp, hirs_csrb_monthly_comp])
+                    if not skip_execute:
+                        LOG.info("Running hirs_ctp_orbital local_execute()...")
+                        LOG.info("Running context... {}".format(context))
+                        local_execute(comp, context)
+
+                    if not skip_prepare:
+                        shutil.move('inputs', 'inputs_{}'.format(idx))
+                    if not skip_execute:
+                        shutil.move('outputs', 'outputs_{}'.format(idx))
+
+                except Exception, err:
+                    LOG.error("{}".format(err))
+                    LOG.debug(traceback.format_exc())
+
+        else:
+
+            try:
+                if not skip_prepare:
+                    LOG.info("Running hirs_ctp_orbital local_prepare()...")
+                    LOG.info("Preparing context... {}".format(contexts[0]))
+                    local_prepare(comp, contexts[0], download_only=[hirs2nc_comp, hirs_avhrr_comp, hirs_csrb_monthly_comp])
+                if not skip_execute:
+                    LOG.info("Running hirs_ctp_orbital local_execute()...")
+                    LOG.info("Running context... {}".format(contexts[0]))
+                    local_execute(comp, contexts[0])
+            except Exception, err:
+                LOG.error("{}".format(err))
+                LOG.debug(traceback.format_exc())
     else:
         LOG.error("There are no valid {} contexts for the interval {}.".format(satellite, interval))
 
