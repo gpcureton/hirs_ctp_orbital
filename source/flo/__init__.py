@@ -348,4 +348,4 @@ class HIRS_CTP_ORBITAL(Computation):
         # Create the CTP Orbital for the current granule.
         rc, ctp_orbital_file = self.create_ctp_orbital(inputs, context)
 
-        return {'out': ctp_orbital_file}
+        return {'out': nc_compress(ctp_orbital_file)}
