@@ -242,6 +242,9 @@ class HIRS_CTP_ORBITAL(Computation):
         begin_time = datetime.strptime('.'.join(file_chunks[3:5]), 'D%y%j.S%H%M')
         end_time = datetime.strptime('.'.join([file_chunks[3], file_chunks[5]]), 'D%y%j.E%H%M')
 
+        if end_time < begin_time:
+            end_time += timedelta(days=1)
+
         return TimeInterval(begin_time, end_time)
 
     def create_ctp_orbital(self, inputs, context):
