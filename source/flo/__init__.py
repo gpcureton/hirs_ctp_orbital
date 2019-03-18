@@ -249,7 +249,7 @@ class HIRS_CTP_ORBITAL(Computation):
 
     def create_ctp_orbital(self, inputs, context):
         '''
-        Create the CFSR statistics for the current day.
+        Create the the CTP Orbital for the current granule.
         '''
 
         rc = 0
